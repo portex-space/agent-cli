@@ -9,6 +9,7 @@ The Portex Agent is a high-performance, standalone CLI tool written in **Go**. I
 - 🛠️ **Developer-First**: Integrated traffic inspection and request logging.
 - 📁 **Instant Sharing**: Serve any local directory as a website with `portex share`.
 - 🔑 **PIN Protection**: Protect your tunnels with 4-digit PINs for private demos.
+- 🛡️ **IP Whitelisting**: Restrict access to specific IP addresses.
 - 💻 **Cross-Platform**: Native support for macOS (Intel/M1), Linux, and Windows.
 
 ## Installation
@@ -41,7 +42,17 @@ portex start --port 8000 --subdomain my-awesome-app
 portex start --port 8080 --pin 1234
 ```
 
-### 4. Share a static directory
+### 4. IP Whitelisting (Security)
+Restrict access to your tunnel to specific IP addresses:
+```bash
+# Allow single IP
+portex start --port 8080 --allow-ip 1.2.3.4
+
+# Allow multiple IPs (shorthand -a)
+portex start -p 8080 -a 1.2.3.4,5.6.7.8
+```
+
+### 5. Share a static directory
 ```bash
 portex share ./dist
 ```

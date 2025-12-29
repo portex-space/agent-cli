@@ -109,9 +109,10 @@ var loginCmd = &cobra.Command{
 
 // Start command variables
 var (
-	port      int
-	subdomain string
-	pin       string
+	port       int
+	subdomain  string
+	pin        string
+	allowedIPs []string
 )
 
 type TunnelResponse struct {
@@ -325,6 +326,9 @@ var startCmd = &cobra.Command{
 		if pin != "" {
 			tunnelReq["pin"] = pin
 		}
+		if len(allowedIPs) > 0 {
+			tunnelReq["allowed_ips"] = allowedIPs
+		}
 		tunnelBody, _ := json.Marshal(tunnelReq)
 
 		req, _ = http.NewRequest("POST", cfg.Server.URL+"/api/agent/tunnels", bytes.NewBuffer(tunnelBody))
@@ -399,6 +403,9 @@ var startCmd = &cobra.Command{
 		if !usageStats.IsPremium && usageStats.UsedFormatted != "" {
 			fmt.Printf("  \033[1mUsage\033[0m         \033[38;5;248m%s / %s (%.1f%%)\033[0m\n",
 				usageStats.UsedFormatted, usageStats.LimitFormatted, usageStats.PercentageUsed)
+		}
+		if len(allowedIPs) > 0 {
+			fmt.Printf("  \033[1mWhitelist\033[0m     \033[32mActive (%d IPs)\033[0m\n", len(allowedIPs))
 		}
 		fmt.Println()
 
@@ -498,11 +505,13 @@ func init() {
 	startCmd.Flags().IntVarP(&port, "port", "p", 0, "Local port to forward")
 	startCmd.Flags().StringVarP(&subdomain, "subdomain", "s", "", "Custom subdomain (optional)")
 	startCmd.Flags().StringVar(&pin, "pin", "", "PIN protection (4 digits)")
+	startCmd.Flags().StringSliceVarP(&allowedIPs, "allow-ip", "a", []string{}, "Allowed IP addresses for whitelisting")
 	startCmd.MarkFlagRequired("port")
 
 	// Share command flags
 	shareCmd.Flags().StringVarP(&subdomain, "subdomain", "s", "", "Custom subdomain (optional)")
 	shareCmd.Flags().StringVar(&pin, "pin", "", "PIN protection (4 digits)")
+	shareCmd.Flags().StringSliceVarP(&allowedIPs, "allow-ip", "a", []string{}, "Allowed IP addresses for whitelisting")
 
 	// Add commands to root
 	rootCmd.AddCommand(loginCmd)
