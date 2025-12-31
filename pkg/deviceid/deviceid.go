@@ -91,20 +91,43 @@ func getLinuxDeviceID() (string, error) {
 }
 
 func getWindowsDeviceID() (string, error) {
-	// Use WMIC to get machine GUID
-	cmd := exec.Command("wmic", "csproduct", "get", "UUID")
+	// 1. Try "reg query" to get MachineGuid (Very reliable on all Windows versions)
+	cmd := exec.Command("reg", "query", "HKEY_LOCAL_MACHINE\\SOFTWARE\\Microsoft\\Cryptography", "/v", "MachineGuid")
 	output, err := cmd.Output()
-	if err != nil {
-		return "", fmt.Errorf("failed to get Windows machine GUID: %w", err)
-	}
-
-	lines := strings.Split(string(output), "\n")
-	if len(lines) >= 2 {
-		uuid := strings.TrimSpace(lines[1])
-		if uuid != "" {
-			return uuid, nil
+	if err == nil {
+		lines := strings.Split(string(output), "\n")
+		for _, line := range lines {
+			if strings.Contains(line, "MachineGuid") {
+				parts := strings.Fields(line)
+				if len(parts) >= 3 {
+					return parts[len(parts)-1], nil
+				}
+			}
 		}
 	}
 
-	return "", fmt.Errorf("could not find Windows machine GUID")
+	// 2. Try PowerShell as fallback
+	cmd = exec.Command("powershell", "-NoProfile", "-Command", "Get-CimInstance Win32_ComputerSystemProduct | Select-Object -ExpandProperty UUID")
+	output, err = cmd.Output()
+	if err == nil {
+		id := strings.TrimSpace(string(output))
+		if id != "" {
+			return id, nil
+		}
+	}
+
+	// 3. Last fallback: WMIC (for legacy systems where it might still exist)
+	cmd = exec.Command("wmic", "csproduct", "get", "UUID")
+	output, err = cmd.Output()
+	if err == nil {
+		lines := strings.Split(string(output), "\n")
+		if len(lines) >= 2 {
+			uuid := strings.TrimSpace(lines[1])
+			if uuid != "" {
+				return uuid, nil
+			}
+		}
+	}
+
+	return "", fmt.Errorf("could not find Windows machine identifier (tried REG, PowerShell and WMIC)")
 }
