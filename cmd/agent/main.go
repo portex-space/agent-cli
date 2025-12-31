@@ -29,7 +29,7 @@ var rootCmd = &cobra.Command{
 	Long:    `Portex is a secure tunnel client that exposes your local services to the internet.`,
 }
 
-var version = "0.6.0"
+var version = "0.6.1"
 
 var versionCmd = &cobra.Command{
 	Use:   "version",
